@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Publicador: miniaplicación web que envía publicaciones a una API REST con Fetch API.">
+  <title>Publicador de mensajes</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Saltar al contenido principal</a>
+
+  <!-- A. Barra superior -->
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+        <span class="brand__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.7 8.7 0 0 1-3.6-.8L3 21l1.9-5.4A8.4 8.4 0 1 1 21 11.5z"></path>
+            <path d="M8.5 10h7M8.5 13.5h4"></path>
+          </svg>
+        </span>
+        <div class="brand__text">
+          <span class="brand__name">Publicador</span>
+          <span class="brand__tagline">Publica tus ideas de forma sencilla</span>
+        </div>
+      </div>
+
+      <!-- Indicador de estado de la API: empieza en "comprobando" -->
+      <div id="api-status" class="api-status api-status--checking" role="status" aria-live="polite">
+        <span class="api-status__dot" aria-hidden="true"></span>
+        <span id="api-status-text">Comprobando API…</span>
+      </div>
+    </div>
+  </header>
+
+  <main id="main" class="layout">
+
+    <!-- B. Encabezado principal -->
+    <section class="intro" aria-labelledby="page-title">
+      <h1 id="page-title">Crea una nueva publicación</h1>
+      <p>Escribe un título y un mensaje. Al publicar, la aplicación los envía a una API de prueba mediante una petición POST y te muestra la respuesta real del servidor.</p>
+      <p id="test-banner" class="test-banner" hidden></p>
+    </section>
+
+    <!-- C. Formulario -->
+    <section class="card card--form" aria-labelledby="form-title">
+      <h2 id="form-title" class="card__title">Nueva publicación</h2>
+
+      <form id="post-form" novalidate>
+        <div class="field">
+          <label for="post-title">Título</label>
+          <input type="text" id="post-title" name="title" maxlength="100" autocomplete="off"
+                 placeholder="Ej.: Resumen de la clase de hoy"
+                 aria-describedby="title-hint title-error title-counter">
+          <div class="field__meta">
+            <span id="title-hint" class="field__hint">Una frase corta que describa tu mensaje.</span>
+            <span id="title-counter" class="field__counter">0 / 100</span>
+          </div>
+          <p id="title-error" class="field__error" hidden></p>
+        </div>
+
+        <div class="field">
+          <label for="post-body">Contenido</label>
+          <textarea id="post-body" name="body" rows="6" maxlength="500"
+                    placeholder="Escribe aquí el contenido de tu publicación…"
+                    aria-describedby="body-hint body-error body-counter"></textarea>
+          <div class="field__meta">
+            <span id="body-hint" class="field__hint">Explica tu idea con tus propias palabras.</span>
+            <span id="body-counter" class="field__counter">0 / 500</span>
+          </div>
+          <p id="body-error" class="field__error" hidden></p>
+        </div>
+
+        <div class="actions">
+          <button type="submit" id="submit-btn" class="btn btn--primary">
+            <span id="submit-spinner" class="spinner spinner--small" aria-hidden="true" hidden></span>
+            <span id="submit-label">Publicar mensaje</span>
+          </button>
+          <button type="button" id="clear-btn" class="btn btn--ghost">Limpiar formulario</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- D. Panel de estado -->
+    <section id="status-panel" class="status status--idle" aria-labelledby="status-title">
+      <h2 id="status-title" class="status__title">Estado de la operación</h2>
+      <div id="status-message" class="status__message" role="status" aria-live="polite">
+        <span id="status-spinner" class="spinner" aria-hidden="true" hidden></span>
+        <span id="status-icon" class="status__icon" aria-hidden="true"></span>
+        <p><strong id="status-label">En espera.</strong> <span id="status-text">Completa el formulario y pulsa «Publicar mensaje».</span></p>
+      </div>
+    </section>
+
+    <!-- E. Tarjeta de resultado -->
+    <section id="result-section" class="card card--result" aria-labelledby="result-title" hidden>
+      <div class="result__header">
+        <h2 id="result-title" class="card__title">Resultado de la última publicación</h2>
+        <span class="badge badge--success"><span aria-hidden="true">✓</span> Operación exitosa</span>
+      </div>
+
+      <div class="result__grid">
+        <div class="result__block">
+          <h3>Datos enviados</h3>
+          <dl>
+            <dt>Título</dt>
+            <dd id="sent-title"></dd>
+            <dt>Contenido</dt>
+            <dd id="sent-body"></dd>
+            <dt>Usuario de prueba</dt>
+            <dd id="sent-user"></dd>
+          </dl>
+        </div>
+
+        <div class="result__block result__block--server">
+          <h3>Respuesta del servidor</h3>
+          <dl>
+            <dt>Estado HTTP</dt>
+            <dd id="resp-status"></dd>
+            <dt>Identificador devuelto</dt>
+            <dd id="resp-id"></dd>
+            <dt>Título recibido</dt>
+            <dd id="resp-title"></dd>
+            <dt>Contenido recibido</dt>
+            <dd id="resp-body"></dd>
+          </dl>
+        </div>
+      </div>
+
+      <p class="note">JSONPlaceholder es una API de pruebas: responde con éxito y un identificador simulado, pero no guarda la publicación de forma permanente.</p>
+    </section>
+
+    <!-- F. Historial de la sesión -->
+    <section class="card" aria-labelledby="history-title">
+      <div class="result__header">
+        <h2 id="history-title" class="card__title">Historial de esta sesión</h2>
+        <button type="button" id="clear-history-btn" class="btn btn--ghost btn--small" hidden>Vaciar historial</button>
+      </div>
+      <p class="note">Solo incluye las publicaciones enviadas con éxito desde que abriste esta página. Se pierde al recargarla.</p>
+      <p id="history-empty" class="empty">Aún no hay publicaciones en esta sesión. Envía la primera desde el formulario.</p>
+      <ol id="history-list" class="history" hidden></ol>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>Ejercicio de Fetch API, async/await y manipulación del DOM · JavaScript puro, sin frameworks.</p>
+  </footer>
+</body>
+</html>
